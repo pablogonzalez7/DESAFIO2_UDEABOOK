@@ -1,8 +1,8 @@
-
 #ifndef FECHA_H
 #define FECHA_H
 
 #include <string>
+using namespace std;
 
 class Fecha
 {
@@ -24,7 +24,9 @@ public:
     int get_mes() const;
     int get_anio() const;
 
-    std::string get_fecha() const;
+    string get_fecha() const;
+
+    bool es_mas_reciente(const Fecha& otra) const;
 };
 
 #endif
