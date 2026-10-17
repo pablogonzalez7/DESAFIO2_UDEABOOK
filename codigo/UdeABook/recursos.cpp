@@ -157,6 +157,7 @@ bool Recursos::cargar()
     return true;
 }
 
+
 bool Recursos::guardar() const
 {
     if (this->ruta.empty())
@@ -168,17 +169,14 @@ bool Recursos::guardar() const
         return false;
 
     for (int i = 0; i < this->cantidad_lineas; i++) {
-
-        archivo << this->lineas[i];
-
-        if (i + 1 < this->cantidad_lineas)
-            archivo << '\n';
+        archivo << this->lineas[i] << '\n';
     }
 
     archivo.close();
 
     return !archivo.fail();
 }
+
 
 bool Recursos::agregar_linea(string texto)
 {

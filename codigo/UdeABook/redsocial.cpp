@@ -1079,5 +1079,236 @@ void RedSocial::menu_buscar_mensajes_por_fecha(
         fecha_inicial,
         fecha_final
         );
+
+
+    int RedSocial::buscar_usuario_en(
+        const Usuario* lista,
+        int cantidad,
+        const string& nombre) const
+    {
+        int izquierda = 0;
+        int derecha = cantidad - 1;
+
+        while (izquierda <= derecha) {
+
+            int mitad = izquierda + (derecha - izquierda) / 2;
+
+            string actual = lista[mitad].get_nombre();
+
+            if (actual == nombre)
+                return mitad;
+
+            if (actual < nombre)
+                izquierda = mitad + 1;
+            else
+                derecha = mitad - 1;
+        }
+
+        return -1;
+    }
+
+
+    bool RedSocial::cargar_usuarios(const string& ruta)
+    {
+        if (this->usuarios != nullptr ||
+            this->cantidad_mensajes > 0 ||
+            this->mensajes_cargados)
+            return false;
+
+        Recursos archivo(ruta);
+
+        if (!archivo.cargar())
+            return false;
+
+        int total_lineas = archivo.get_cantidad_lineas();
+
+        if (total_lineas == 0 || total_lineas % 3 != 0)
+            return false;
+
+        int total = total_lineas / 3;
+
+        Usuario* nuevos = new Usuario[total];
+
+        for (int i = 0; i < total; i++) {
+
+            string linea = archivo.get_linea(i * 3);
+            string campos[8];
+
+            string::size_type inicio = 0;
+            bool valido = true;
+
+            for (int j = 0; j < 7; j++) {
+
+                string::size_type fin = linea.find('|', inicio);
+
+                if (fin == string::npos) {
+                    valido = false;
+                    break;
+                }
+
+                campos[j] = linea.substr(inicio, fin - inicio);
+                inicio = fin + 1;
+            }
+
+            if (!valido) {
+                delete[] nuevos;
+                return false;
+            }
+
+            campos[7] = linea.substr(inicio);
+
+            if (campos[7].find('|') != string::npos) {
+                delete[] nuevos;
+                return false;
+            }
+
+            for (int j = 0; j < 8; j++) {
+                if (campos[j].empty()) {
+                    valido = false;
+                    break;
+                }
+            }
+
+            Fecha nacimiento;
+            Fecha inscripcion;
+
+            if (!valido ||
+                !this->convertir_fecha(campos[5], nacimiento) ||
+                !this->convertir_fecha(campos[6], inscripcion)) {
+
+                delete[] nuevos;
+                return false;
+            }
+
+            if (i > 0 &&
+                nuevos[i - 1].get_nombre() >= campos[0]) {
+
+                delete[] nuevos;
+                return false;
+            }
+
+            nuevos[i].set_datos(
+                campos[0],
+                campos[1],
+                campos[2],
+                campos[3],
+                campos[4],
+                nacimiento,
+                inscripcion
+                );
+        }
+
+        long long bits = 1LL * total * (total - 1) / 2;
+
+        int bytes = (bits + 7) / 8;
+        int sobrantes = bytes * 8LL - bits;
+
+        unsigned char* nuevas_relaciones = nullptr;
+
+        if (bytes > 0)
+            nuevas_relaciones = new unsigned char[bytes]();
+
+        for (int i = 0; i < total; i++) {
+
+            string lista = archivo.get_linea(i * 3 + 1);
+
+            if (lista.empty())
+                continue;
+
+            string::size_type inicio = 0;
+
+            while (true) {
+
+                string::size_type fin = lista.find('|', inicio);
+
+                string nombre;
+
+                if (fin == string::npos)
+                    nombre = lista.substr(inicio);
+                else
+                    nombre = lista.substr(inicio, fin - inicio);
+
+                int amigo = this->buscar_usuario_en(
+                    nuevos, total, nombre
+                    );
+
+                if (amigo == -1 || amigo == i) {
+                    delete[] nuevas_relaciones;
+                    delete[] nuevos;
+                    return false;
+                }
+
+                int pos1 = i;
+                int pos2 = amigo;
+
+                if (pos1 > pos2) {
+                    int auxiliar = pos1;
+                    pos1 = pos2;
+                    pos2 = auxiliar;
+                }
+
+                long long posicion =
+                    1LL * pos1 * (2LL * total - pos1 - 1) / 2
+                    + pos2 - pos1 - 1;
+
+                long long real = posicion + sobrantes;
+
+                int byte = real / 8;
+                int bit = 7 - real % 8;
+
+                nuevas_relaciones[byte] |= (1u << bit);
+
+                if (fin == string::npos)
+                    break;
+
+                inicio = fin + 1;
+            }
+        }
+
+        this->archivo_usuarios = archivo;
+
+        this->usuarios = nuevos;
+        this->cantidad_usuarios = total;
+
+        this->relaciones = nuevas_relaciones;
+        this->bytes_relaciones = bytes;
+        this->sobrantes = sobrantes;
+
+        return true;
+    }
+
+
+    bool RedSocial::guardar_usuarios()
+    {
+        if (this->usuarios == nullptr)
+            return false;
+
+        if (this->archivo_usuarios.get_cantidad_lineas()
+            != this->cantidad_usuarios * 3)
+            return false;
+
+        for (int i = 0; i < this->cantidad_usuarios; i++) {
+
+            string amigos = "";
+
+            for (int j = 0; j < this->cantidad_usuarios; j++) {
+
+                if (this->relacion(i, j)) {
+
+                    if (!amigos.empty())
+                        amigos += "|";
+
+                    amigos += this->usuarios[j].get_nombre();
+                }
+            }
+
+            if (!this->archivo_usuarios.modificar_linea(
+                    i * 3 + 1, amigos))
+                return false;
+        }
+
+        return this->archivo_usuarios.guardar();
+    }
+
 }
--
+

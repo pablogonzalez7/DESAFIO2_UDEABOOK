@@ -5,6 +5,7 @@
 #include "usuario.h"
 #include "mensaje.h"
 #include "sugerencia.h"
+#include "recursos.h"
 
 using namespace std;
 
@@ -47,6 +48,12 @@ private:
     void ampliar_mensajes();
     void limites_mensajes(int pos_usuario, int& inicio, int& fin) const;
     void mostrar_mensaje(int posicion) const;
+
+    Recursos archivo_usuarios;
+
+    int buscar_usuario_en(const Usuario* lista,
+                          int cantidad,
+                          const string& nombre) const;
 
 public:
     RedSocial();
@@ -91,6 +98,9 @@ public:
         ) const;
 
     void menu_buscar_mensajes_por_fecha(int pos_usuario) const;
+
+    bool cargar_usuarios(const string& ruta);
+    bool guardar_usuarios();
 };
 
 #endif
