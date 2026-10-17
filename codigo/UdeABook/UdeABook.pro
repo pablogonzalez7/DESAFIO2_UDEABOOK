@@ -9,6 +9,7 @@ SOURCES += \
         foto.cpp \
         main.cpp \
         mensaje.cpp \
+        recursos.cpp \
         redsocial.cpp \
         sugerencia.cpp \
         usuario.cpp
@@ -18,6 +19,7 @@ HEADERS += \
     fecha.h \
     foto.h \
     mensaje.h \
+    recursos.h \
     redsocial.h \
     sugerencia.h \
     usuario.h
