@@ -101,6 +101,8 @@ public:
 
     bool cargar_usuarios(const string& ruta);
     bool guardar_usuarios();
+
+    void menu_visitar_perfil_amigo(int pos_usuario);
 };
 
 #endif

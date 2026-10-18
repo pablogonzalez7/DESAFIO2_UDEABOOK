@@ -1310,5 +1310,115 @@ void RedSocial::menu_buscar_mensajes_por_fecha(
         return this->archivo_usuarios.guardar();
     }
 
+
+    void RedSocial::menu_visitar_perfil_amigo(int pos_usuario)
+    {
+        Usuario* visitante = this->get_usuario(pos_usuario);
+
+        if (visitante == nullptr) {
+            cout << "Usuario invalido.\n";
+            return;
+        }
+
+        string nombre;
+
+        cout << "\nNombre del amigo a visitar: ";
+
+        if (!getline(cin, nombre))
+            return;
+
+        int pos_amigo = this->buscar_usuario(nombre);
+
+        if (pos_amigo == -1) {
+            cout << "El usuario no existe.\n";
+            return;
+        }
+
+        if (!this->relacion(pos_usuario, pos_amigo)) {
+            cout << "Solo puedes visitar el perfil de un amigo.\n";
+            return;
+        }
+
+        Usuario* amigo = this->get_usuario(pos_amigo);
+
+        int total = amigo->get_cantidad_albumes();
+
+        if (total == 0) {
+            cout << "Este usuario no tiene albumes.\n";
+            return;
+        }
+
+        int* indices_visibles = new int[total];
+        int cantidad_visibles = 0;
+
+        cout << "\nPerfil de: " << amigo->get_nombre() << "\n";
+        cout << "\nAlbumes disponibles:\n";
+
+        for (int i = 0; i < total; i++) {
+
+            Album* album = amigo->get_album(i);
+
+            if (album != nullptr &&
+                album->puede_ver(visitante, true)) {
+
+                indices_visibles[cantidad_visibles] = i;
+
+                cout << cantidad_visibles + 1 << ". "
+                     << album->get_nombre()
+                     << " (" << album->get_privacidad() << ")\n";
+
+                cantidad_visibles++;
+            }
+        }
+
+        if (cantidad_visibles == 0) {
+            cout << "No hay albumes disponibles.\n";
+            delete[] indices_visibles;
+            return;
+        }
+
+        cout << "0. Volver\n";
+
+        string entrada;
+        int opcion;
+
+        while (true) {
+
+            cout << "\nSelecciona un album: ";
+
+            if (!getline(cin, entrada)) {
+                delete[] indices_visibles;
+                return;
+            }
+
+            if (!this->convertir_entero(entrada, opcion)) {
+                cout << "Opcion invalida.\n";
+                continue;
+            }
+
+            if (opcion == 0) {
+                delete[] indices_visibles;
+                return;
+            }
+
+            if (opcion < 1 || opcion > cantidad_visibles) {
+                cout << "Opcion invalida.\n";
+                continue;
+            }
+
+            break;
+        }
+
+        int indice_real = indices_visibles[opcion - 1];
+
+        delete[] indices_visibles;
+
+        Album* seleccionado = amigo->get_album(indice_real);
+
+        if (seleccionado != nullptr)
+            seleccionado->ver_carrusel(visitante, true);
+    }
+
+
 }
 

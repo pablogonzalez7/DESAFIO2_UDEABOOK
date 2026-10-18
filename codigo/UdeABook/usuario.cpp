@@ -1,9 +1,13 @@
+
 #include "usuario.h"
 
 Usuario::Usuario()
     : solicitudes_recibidas(nullptr),
     cantidad_solicitudes(0),
-    capacidad_solicitudes(0)
+    capacidad_solicitudes(0),
+    albumes(nullptr),
+    cantidad_albumes(0),
+    capacidad_albumes(0)
 {
 }
 
@@ -23,7 +27,10 @@ Usuario::Usuario(string nombre,
     inscripcion(inscripcion),
     solicitudes_recibidas(nullptr),
     cantidad_solicitudes(0),
-    capacidad_solicitudes(0)
+    capacidad_solicitudes(0),
+    albumes(nullptr),
+    cantidad_albumes(0),
+    capacidad_albumes(0)
 {
 }
 
@@ -42,6 +49,7 @@ Usuario::Usuario(const Usuario& otro)
     this->capacidad_solicitudes = otro.capacidad_solicitudes;
 
     if (this->capacidad_solicitudes > 0) {
+
         this->solicitudes_recibidas =
             new Usuario*[this->capacidad_solicitudes]();
 
@@ -50,27 +58,36 @@ Usuario::Usuario(const Usuario& otro)
                 otro.solicitudes_recibidas[i];
         }
     }
+
+    this->albumes = nullptr;
+    this->cantidad_albumes = otro.cantidad_albumes;
+    this->capacidad_albumes = otro.capacidad_albumes;
+
+    if (this->capacidad_albumes > 0) {
+
+        this->albumes = new Album[this->capacidad_albumes];
+
+        for (int i = 0; i < this->cantidad_albumes; i++) {
+            this->albumes[i] = otro.albumes[i];
+            this->albumes[i].set_propietario(this);
+        }
+    }
 }
 
 Usuario::~Usuario()
 {
     delete[] this->solicitudes_recibidas;
+    delete[] this->albumes;
 }
 
 const Usuario& Usuario::operator=(const Usuario& otro)
 {
     if (this != &otro) {
-        this->nombre = otro.nombre;
-        this->contra = otro.contra;
-        this->correo = otro.correo;
-        this->ciudad = otro.ciudad;
-        this->pais = otro.pais;
-        this->nacimiento = otro.nacimiento;
-        this->inscripcion = otro.inscripcion;
 
         Usuario** nuevas_solicitudes = nullptr;
 
         if (otro.capacidad_solicitudes > 0) {
+
             nuevas_solicitudes =
                 new Usuario*[otro.capacidad_solicitudes]();
 
@@ -80,11 +97,36 @@ const Usuario& Usuario::operator=(const Usuario& otro)
             }
         }
 
+        Album* nuevos_albumes = nullptr;
+
+        if (otro.capacidad_albumes > 0) {
+
+            nuevos_albumes = new Album[otro.capacidad_albumes];
+
+            for (int i = 0; i < otro.cantidad_albumes; i++) {
+                nuevos_albumes[i] = otro.albumes[i];
+                nuevos_albumes[i].set_propietario(this);
+            }
+        }
+
         delete[] this->solicitudes_recibidas;
+        delete[] this->albumes;
+
+        this->nombre = otro.nombre;
+        this->contra = otro.contra;
+        this->correo = otro.correo;
+        this->ciudad = otro.ciudad;
+        this->pais = otro.pais;
+        this->nacimiento = otro.nacimiento;
+        this->inscripcion = otro.inscripcion;
 
         this->solicitudes_recibidas = nuevas_solicitudes;
         this->cantidad_solicitudes = otro.cantidad_solicitudes;
         this->capacidad_solicitudes = otro.capacidad_solicitudes;
+
+        this->albumes = nuevos_albumes;
+        this->cantidad_albumes = otro.cantidad_albumes;
+        this->capacidad_albumes = otro.capacidad_albumes;
     }
 
     return *this;
@@ -145,4 +187,62 @@ Fecha Usuario::get_inscripcion() const
 bool Usuario::verificar_contra(const string& intento) const
 {
     return this->contra == intento;
+}
+
+int Usuario::get_cantidad_albumes() const
+{
+    return this->cantidad_albumes;
+}
+
+bool Usuario::agregar_album(const Album& album)
+{
+    if (album.get_nombre().empty())
+        return false;
+
+    for (int i = 0; i < this->cantidad_albumes; i++) {
+
+        if (this->albumes[i].get_nombre() == album.get_nombre())
+            return false;
+    }
+
+    if (this->cantidad_albumes == this->capacidad_albumes) {
+
+        int nueva_capacidad = this->capacidad_albumes == 0
+                                  ? 2 : this->capacidad_albumes * 2;
+
+        Album* nuevos_albumes = new Album[nueva_capacidad];
+
+        for (int i = 0; i < this->cantidad_albumes; i++) {
+            nuevos_albumes[i] = this->albumes[i];
+            nuevos_albumes[i].set_propietario(this);
+        }
+
+        delete[] this->albumes;
+
+        this->albumes = nuevos_albumes;
+        this->capacidad_albumes = nueva_capacidad;
+    }
+
+    this->albumes[this->cantidad_albumes] = album;
+    this->albumes[this->cantidad_albumes].set_propietario(this);
+
+    this->cantidad_albumes++;
+
+    return true;
+}
+
+Album* Usuario::get_album(int posicion)
+{
+    if (posicion < 0 || posicion >= this->cantidad_albumes)
+        return nullptr;
+
+    return &this->albumes[posicion];
+}
+
+const Album* Usuario::get_album(int posicion) const
+{
+    if (posicion < 0 || posicion >= this->cantidad_albumes)
+        return nullptr;
+
+    return &this->albumes[posicion];
 }

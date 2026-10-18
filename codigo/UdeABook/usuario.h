@@ -1,8 +1,10 @@
+
 #ifndef USUARIO_H
 #define USUARIO_H
 
 #include <string>
 #include "fecha.h"
+#include "album.h"
 
 using namespace std;
 
@@ -15,6 +17,10 @@ private:
     Usuario** solicitudes_recibidas;
     int cantidad_solicitudes;
     int capacidad_solicitudes;
+
+    Album* albumes;
+    int cantidad_albumes;
+    int capacidad_albumes;
 
 public:
     Usuario();
@@ -51,6 +57,13 @@ public:
     Fecha get_inscripcion() const;
 
     bool verificar_contra(const string& intento) const;
+
+    int get_cantidad_albumes() const;
+
+    bool agregar_album(const Album& album);
+
+    Album* get_album(int posicion);
+    const Album* get_album(int posicion) const;
 };
 
 #endif
