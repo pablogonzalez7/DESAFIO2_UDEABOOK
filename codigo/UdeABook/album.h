@@ -12,7 +12,7 @@ class Usuario;
 class Album
 {
 private:
-    string nombre;
+    string nombre, ruta, privacidad;
     Usuario* propietario;
 
     Foto* fotos;
@@ -22,7 +22,8 @@ private:
 public:
     Album();
 
-    Album(string nombre, Usuario* propietario);
+    Album(string nombre, Usuario* propietario,
+          string ruta = "", string privacidad = "privado");
 
     Album(const Album& otro);
 
@@ -32,9 +33,13 @@ public:
     bool operator==(const Album& otro) const;
 
     void set_nombre(string nombre);
-    string get_nombre() const;
-
+    void set_ruta(string ruta);
+    bool set_privacidad(string privacidad);
     void set_propietario(Usuario* propietario);
+
+    string get_nombre() const;
+    string get_ruta() const;
+    string get_privacidad() const;
     Usuario* get_propietario() const;
 
     int get_cantidad_fotos() const;
@@ -42,7 +47,11 @@ public:
     bool agregar_foto(const Foto& foto);
     bool eliminar_foto(int posicion);
 
+    Foto* get_foto(int posicion);
     const Foto* get_foto(int posicion) const;
+
+    bool puede_ver(Usuario* visitante, bool es_amigo) const;
+    void ver_carrusel(Usuario* visitante, bool es_amigo);
 };
 
 #endif
