@@ -5,10 +5,13 @@ CONFIG -= qt
 
 SOURCES += \
         album.cpp \
+        archivo.cpp \
         fecha.cpp \
         foto.cpp \
+        interfaz.cpp \
         main.cpp \
         mensaje.cpp \
+        nodomensaje.cpp \
         recursos.cpp \
         redsocial.cpp \
         sugerencia.cpp \
@@ -16,9 +19,12 @@ SOURCES += \
 
 HEADERS += \
     album.h \
+    archivo.h \
     fecha.h \
     foto.h \
+    interfaz.h \
     mensaje.h \
+    nodomensaje.h \
     recursos.h \
     redsocial.h \
     sugerencia.h \
