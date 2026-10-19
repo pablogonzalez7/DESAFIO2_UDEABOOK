@@ -12,34 +12,33 @@ class Mensaje
 {
 private:
     string contenido;
-    Usuario* emisor;
-    Usuario* receptor;
+    Usuario *emisor;
+    Usuario *receptor;
     Fecha fecha;
     bool leido;
 
 public:
     Mensaje();
 
-    Mensaje(string contenido, Usuario* emisor,
-            Usuario* receptor, const Fecha& fecha,
+    Mensaje(const string &contenido, Usuario *emisor, Usuario *receptor, const Fecha &fecha,
             bool leido = false);
 
-    Mensaje(const Mensaje& otro);
+    Mensaje(const Mensaje &otro);
 
-    const Mensaje& operator=(const Mensaje& otro);
-    bool operator==(const Mensaje& otro) const;
+    const Mensaje &operator=(const Mensaje &otro);
+    bool operator==(const Mensaje &otro) const;
 
-    const string& get_contenido() const;
-    Usuario* get_emisor() const;
-    Usuario* get_receptor() const;
-    const Fecha& get_fecha() const;
+    const string &get_contenido() const;
+    Usuario *get_emisor() const;
+    Usuario *get_receptor() const;
+    const Fecha &get_fecha() const;
     bool get_leido() const;
 
-    void set_datos(string contenido, Usuario* emisor,
-                   Usuario* receptor, const Fecha& fecha,
+    void set_datos(const string &contenido, Usuario *emisor, Usuario *receptor, const Fecha &fecha,
                    bool leido);
 
     void marcar_leido();
+    void intercambiar(Mensaje &otro) noexcept;
 };
 
 #endif

@@ -7,9 +7,9 @@ using namespace std;
 class Fecha
 {
 private:
-    int dia;
-    int mes;
-    int anio;
+    unsigned char dia;
+    unsigned char mes;
+    unsigned short anio;
 
     bool es_bisiesto(int anio) const;
     bool fecha_valida(int d, int m, int a) const;
@@ -26,7 +26,7 @@ public:
 
     string get_fecha() const;
 
-    bool es_mas_reciente(const Fecha& otra) const;
+    bool es_mas_reciente(const Fecha &otra) const;
 };
 
 #endif

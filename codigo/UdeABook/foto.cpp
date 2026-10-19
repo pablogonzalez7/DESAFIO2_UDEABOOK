@@ -1,23 +1,27 @@
-
+#include "recursos.h"
 #include "foto.h"
 
 Foto::Foto()
 {
+    RegistroLocal memoria_1(static_cast<unsigned int>(sizeof(this)));
+
     this->ruta = "";
     this->descripcion = "";
     this->tamano = 0;
     this->likes = 0;
 }
 
-Foto::Foto(string ruta, string descripcion,
-           Fecha fecha_captura, long long tamano, int likes)
+Foto::Foto(const string &ruta, const string &descripcion, Fecha fecha_captura, unsigned int tamano, unsigned int likes)
 {
-    this->set_datos(ruta, descripcion, fecha_captura,
-                    tamano, likes);
+    RegistroLocal memoria_2(static_cast<unsigned int>(sizeof(fecha_captura)) + static_cast<unsigned int>(sizeof(tamano)) + static_cast<unsigned int>(sizeof(likes)) + static_cast<unsigned int>(sizeof(this)));
+
+    this->set_datos(ruta, descripcion, fecha_captura, tamano, likes);
 }
 
-Foto::Foto(const Foto& otra)
+Foto::Foto(const Foto &otra)
 {
+    RegistroLocal memoria_3(static_cast<unsigned int>(sizeof(this)));
+
     this->ruta = otra.ruta;
     this->descripcion = otra.descripcion;
     this->fecha_captura = otra.fecha_captura;
@@ -27,11 +31,15 @@ Foto::Foto(const Foto& otra)
 
 Foto::~Foto()
 {
+    RegistroLocal memoria_4(static_cast<unsigned int>(sizeof(this)));
 }
 
-const Foto& Foto::operator=(const Foto& otra)
+const Foto &Foto::operator=(const Foto &otra)
 {
-    if (this != &otra) {
+    RegistroLocal memoria_5(static_cast<unsigned int>(sizeof(this)));
+
+    if (this != &otra)
+    {
         this->ruta = otra.ruta;
         this->descripcion = otra.descripcion;
         this->fecha_captura = otra.fecha_captura;
@@ -42,79 +50,97 @@ const Foto& Foto::operator=(const Foto& otra)
     return *this;
 }
 
-bool Foto::operator==(const Foto& otra) const
+bool Foto::operator==(const Foto &otra) const
 {
+    RegistroLocal memoria_6(static_cast<unsigned int>(sizeof(this)));
+
     return this->ruta == otra.ruta;
 }
 
-void Foto::set_datos(string ruta, string descripcion,
-                     Fecha fecha_captura,
-                     long long tamano, int likes)
+void Foto::set_datos(const string &ruta, const string &descripcion, Fecha fecha_captura, unsigned int tamano,
+                     unsigned int likes)
 {
+    RegistroLocal memoria_7(static_cast<unsigned int>(sizeof(fecha_captura)) + static_cast<unsigned int>(sizeof(tamano)) + static_cast<unsigned int>(sizeof(likes)) + static_cast<unsigned int>(sizeof(this)));
+
     this->ruta = ruta;
     this->descripcion = descripcion;
     this->fecha_captura = fecha_captura;
-    this->tamano = tamano >= 0 ? tamano : 0;
-    this->likes = likes >= 0 ? likes : 0;
+    this->tamano = tamano;
+    this->likes = likes;
 }
 
-bool Foto::set_tamano(long long tamano)
+bool Foto::set_tamano(unsigned int tamano)
 {
-    if (tamano < 0)
-        return false;
+    RegistroLocal memoria_8(static_cast<unsigned int>(sizeof(tamano)) + static_cast<unsigned int>(sizeof(this)));
 
     this->tamano = tamano;
 
     return true;
 }
 
-bool Foto::set_likes(int likes)
+bool Foto::set_likes(unsigned int likes)
 {
-    if (likes < 0)
-        return false;
+    RegistroLocal memoria_9(static_cast<unsigned int>(sizeof(likes)) + static_cast<unsigned int>(sizeof(this)));
 
     this->likes = likes;
 
     return true;
 }
 
-string Foto::get_ruta() const
+const string &Foto::get_ruta() const
 {
+    RegistroLocal memoria_10(static_cast<unsigned int>(sizeof(this)));
+
     return this->ruta;
 }
 
-string Foto::get_descripcion() const
+const string &Foto::get_descripcion() const
 {
+    RegistroLocal memoria_11(static_cast<unsigned int>(sizeof(this)));
+
     return this->descripcion;
 }
 
 Fecha Foto::get_fecha_captura() const
 {
+    RegistroLocal memoria_12(static_cast<unsigned int>(sizeof(this)));
+
     return this->fecha_captura;
 }
 
 Fecha Foto::get_fecha_publicacion() const
 {
+    RegistroLocal memoria_13(static_cast<unsigned int>(sizeof(this)));
+
     return this->fecha_captura;
 }
 
-long long Foto::get_tamano() const
+unsigned int Foto::get_tamano() const
 {
+    RegistroLocal memoria_14(static_cast<unsigned int>(sizeof(this)));
+
     return this->tamano;
 }
 
-int Foto::get_likes() const
+unsigned int Foto::get_likes() const
 {
+    RegistroLocal memoria_15(static_cast<unsigned int>(sizeof(this)));
+
     return this->likes;
 }
 
 void Foto::dar_like()
 {
-    this->likes++;
+    RegistroLocal memoria_16(static_cast<unsigned int>(sizeof(this)));
+
+    if (this->likes != static_cast<unsigned int>(-1))
+        this->likes++;
 }
 
 bool Foto::quitar_like()
 {
+    RegistroLocal memoria_17(static_cast<unsigned int>(sizeof(this)));
+
     if (this->likes == 0)
         return false;
 
