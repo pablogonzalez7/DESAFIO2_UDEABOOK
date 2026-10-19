@@ -1,229 +1,169 @@
-
 #include "recursos.h"
-#include <fstream>
-
-Recursos::Recursos()
-    : ruta(""), lineas(nullptr),
-    cantidad_lineas(0), capacidad_lineas(0)
+#include <iostream>
+Recursos *recursos_activos = nullptr;
+unsigned int memoria_dinamica = 0;
+unsigned int memoria_local = 0;
+bool memoria_fuera_de_rango = false;
+unsigned int sumar_memoria(unsigned int primero, unsigned int segundo)
 {
-}
-
-Recursos::Recursos(string ruta)
-    : ruta(ruta), lineas(nullptr),
-    cantidad_lineas(0), capacidad_lineas(0)
-{
-}
-
-Recursos::Recursos(const Recursos& otro)
-    : ruta(otro.ruta), lineas(nullptr),
-    cantidad_lineas(otro.cantidad_lineas),
-    capacidad_lineas(otro.capacidad_lineas)
-{
-    if (this->capacidad_lineas > 0) {
-
-        this->lineas = new string[this->capacidad_lineas];
-
-        for (int i = 0; i < this->cantidad_lineas; i++) {
-            this->lineas[i] = otro.lineas[i];
-        }
+    if (segundo > static_cast<unsigned int>(-1) - primero)
+    {
+        memoria_fuera_de_rango = true;
+        return static_cast<unsigned int>(-1);
     }
+    return primero + segundo;
 }
-
+unsigned int memoria_total()
+{
+    unsigned int globals = static_cast<unsigned int>(sizeof(recursos_activos) + sizeof(memoria_local) + sizeof(memoria_dinamica) + sizeof(memoria_fuera_de_rango));
+    return sumar_memoria(sumar_memoria(memoria_local, memoria_dinamica), globals);
+}
+Recursos::Recursos(const char *nombre)
+{
+    this->funcionalidad = nombre;
+    this->iteraciones = 0;
+    for (unsigned char i = 0; i < 12; i++)
+        this->llamadas[i] = 0;
+    this->anterior = recursos_activos;
+    recursos_activos = this;
+    memoria_local = sumar_memoria(memoria_local, static_cast<unsigned int>(sizeof(Recursos)));
+    this->maximo_memoria = memoria_total();
+}
 Recursos::~Recursos()
 {
-    delete[] this->lineas;
+    if (!memoria_fuera_de_rango) memoria_local -= static_cast<unsigned int>(sizeof(Recursos));
+    recursos_activos = this->anterior;
+}
+void Recursos::iterar()
+{
+    this->iteraciones++;
+}
+void Recursos::invocar(unsigned char funcion, unsigned int cantidad)
+{
+    if (funcion < 12)
+        this->llamadas[funcion] = cantidad > static_cast<unsigned int>(-1) - this->llamadas[funcion] ? static_cast<unsigned int>(-1) : this->llamadas[funcion] + cantidad;
+}
+void Recursos::actualizar_maximo()
+{
+    unsigned int actual = memoria_total();
+    if (actual > this->maximo_memoria)
+        this->maximo_memoria = actual;
+}
+void Recursos::mostrar() const
+{
+    if (memoria_fuera_de_rango) cout << "Memoria: el conteo excedio el rango de unsigned int; los valores de memoria estan saturados.\n";
+    const char *nombres[12] = {"getline (string)",
+                               "get (fstream)",
+                               "apertura de archivo (fstream)",
+                               "close (fstream)",
+                               "clear (iostream/fstream)",
+                               "seekg (fstream)",
+                               "random_device (random)",
+                               "uniform_int_distribution (random)",
+                               "seed (random)",
+                               "insercion << (iostream/fstream)",
+                               "estado del flujo (iostream/fstream)",
+                               "ignore (iostream)"};
+    cout << "\nPara esta funcionalidad: " << this->funcionalidad
+         << "\nCantidad de iteraciones ejecutadas: " << this->iteraciones
+         << "\nMemoria contabilizada al cierre: "
+         << memoria_total()
+         << " bytes"
+         << "\nMaximo de memoria contabilizada: " << this->maximo_memoria << " bytes\n";
+    for (unsigned char i = 0; i < 12; i++)
+        if (this->llamadas[i] != 0)
+            cout << "+ " << this->llamadas[i] << " invocaciones: " << nombres[i] << '\n';
+    cout << "Incluye sizeof de objetos/locales y reservas propias. Excluye memoria interna de librerias y "
+            "del asignador.\n\n";
+}
+RegistroLocal::RegistroLocal(unsigned int cantidad)
+{
+    this->bytes = sumar_memoria(cantidad, static_cast<unsigned int>(sizeof(RegistroLocal)));
+    memoria_local = sumar_memoria(memoria_local, this->bytes);
+    if (recursos_activos != nullptr)
+        recursos_activos->actualizar_maximo();
+}
+RegistroLocal::~RegistroLocal()
+{
+    if (!memoria_fuera_de_rango) memoria_local -= this->bytes;
+}
+void contar_iteracion()
+{
+    if (recursos_activos != nullptr)
+        recursos_activos->iterar();
+}
+void contar_llamada(unsigned char funcion)
+{
+    if (recursos_activos != nullptr)
+        recursos_activos->invocar(funcion);
+}
+void registrar_reserva(unsigned int bytes)
+{
+    memoria_dinamica = sumar_memoria(memoria_dinamica, bytes);
+    if (recursos_activos != nullptr)
+        recursos_activos->actualizar_maximo();
+}
+void registrar_liberacion(unsigned int bytes)
+{
+    if (!memoria_fuera_de_rango) memoria_dinamica -= bytes;
 }
 
-const Recursos& Recursos::operator=(const Recursos& otro)
+Usuario *registrar_reserva(Usuario *puntero, unsigned int bytes)
 {
-    if (this != &otro) {
-
-        string* nuevas_lineas = nullptr;
-
-        if (otro.capacidad_lineas > 0) {
-
-            nuevas_lineas = new string[otro.capacidad_lineas];
-
-            for (int i = 0; i < otro.cantidad_lineas; i++) {
-                nuevas_lineas[i] = otro.lineas[i];
-            }
-        }
-
-        delete[] this->lineas;
-
-        this->ruta = otro.ruta;
-        this->lineas = nuevas_lineas;
-        this->cantidad_lineas = otro.cantidad_lineas;
-        this->capacidad_lineas = otro.capacidad_lineas;
-    }
-
-    return *this;
+    registrar_reserva(bytes);
+    return puntero;
 }
 
-bool Recursos::operator==(const Recursos& otro) const
+Album *registrar_reserva(Album *puntero, unsigned int bytes)
 {
-    if (this->ruta != otro.ruta ||
-        this->cantidad_lineas != otro.cantidad_lineas)
-        return false;
-
-    for (int i = 0; i < this->cantidad_lineas; i++) {
-        if (this->lineas[i] != otro.lineas[i])
-            return false;
-    }
-
-    return true;
+    registrar_reserva(bytes);
+    return puntero;
 }
 
-void Recursos::set_ruta(string ruta)
+Foto *registrar_reserva(Foto *puntero, unsigned int bytes)
 {
-    this->ruta = ruta;
+    registrar_reserva(bytes);
+    return puntero;
 }
 
-string Recursos::get_ruta() const
+Mensaje *registrar_reserva(Mensaje *puntero, unsigned int bytes)
 {
-    return this->ruta;
+    registrar_reserva(bytes);
+    return puntero;
 }
 
-int Recursos::get_cantidad_lineas() const
+Sugerencia *registrar_reserva(Sugerencia *puntero, unsigned int bytes)
 {
-    return this->cantidad_lineas;
+    registrar_reserva(bytes);
+    return puntero;
 }
 
-string Recursos::get_linea(int posicion) const
+NodoMensaje *registrar_reserva(NodoMensaje *puntero, unsigned int bytes)
 {
-    if (posicion < 0 || posicion >= this->cantidad_lineas)
-        return "";
-
-    return this->lineas[posicion];
+    registrar_reserva(bytes);
+    return puntero;
 }
 
-bool Recursos::cargar()
+string *registrar_reserva(string *puntero, unsigned int bytes)
 {
-    if (this->ruta.empty())
-        return false;
-
-    ifstream archivo(this->ruta.c_str());
-
-    if (!archivo.is_open())
-        return false;
-
-    int total = 0;
-    string texto;
-
-    while (getline(archivo, texto)) {
-        total++;
-    }
-
-    if (archivo.bad())
-        return false;
-
-    archivo.clear();
-    archivo.seekg(0);
-
-    if (!archivo)
-        return false;
-
-    string* nuevas_lineas = nullptr;
-
-    if (total > 0)
-        nuevas_lineas = new string[total];
-
-    for (int i = 0; i < total; i++) {
-
-        if (!getline(archivo, texto)) {
-            delete[] nuevas_lineas;
-            return false;
-        }
-
-        if (!texto.empty() &&
-            texto[texto.size() - 1] == '\r') {
-            texto.erase(texto.size() - 1);
-        }
-
-        nuevas_lineas[i] = texto;
-    }
-
-    if (archivo.bad()) {
-        delete[] nuevas_lineas;
-        return false;
-    }
-
-    delete[] this->lineas;
-
-    this->lineas = nuevas_lineas;
-    this->cantidad_lineas = total;
-    this->capacidad_lineas = total;
-
-    return true;
+    registrar_reserva(bytes);
+    return puntero;
 }
 
-
-bool Recursos::guardar() const
+unsigned int *registrar_reserva(unsigned int *puntero, unsigned int bytes)
 {
-    if (this->ruta.empty())
-        return false;
-
-    ofstream archivo(this->ruta.c_str());
-
-    if (!archivo.is_open())
-        return false;
-
-    for (int i = 0; i < this->cantidad_lineas; i++) {
-        archivo << this->lineas[i] << '\n';
-    }
-
-    archivo.close();
-
-    return !archivo.fail();
+    registrar_reserva(bytes);
+    return puntero;
 }
 
-
-bool Recursos::agregar_linea(string texto)
+unsigned char *registrar_reserva(unsigned char *puntero, unsigned int bytes)
 {
-    if (this->cantidad_lineas == this->capacidad_lineas) {
-
-        int nueva_capacidad = (this->capacidad_lineas == 0)
-        ? 2 : this->capacidad_lineas * 2;
-
-        string* nuevas_lineas = new string[nueva_capacidad];
-
-        for (int i = 0; i < this->cantidad_lineas; i++) {
-            nuevas_lineas[i] = this->lineas[i];
-        }
-
-        delete[] this->lineas;
-
-        this->lineas = nuevas_lineas;
-        this->capacidad_lineas = nueva_capacidad;
-    }
-
-    this->lineas[this->cantidad_lineas] = texto;
-    this->cantidad_lineas++;
-
-    return true;
+    registrar_reserva(bytes);
+    return puntero;
 }
 
-bool Recursos::modificar_linea(int posicion, string texto)
+void contar_llamadas(unsigned char funcion, unsigned int cantidad)
 {
-    if (posicion < 0 || posicion >= this->cantidad_lineas)
-        return false;
-
-    this->lineas[posicion] = texto;
-
-    return true;
-}
-
-bool Recursos::eliminar_linea(int posicion)
-{
-    if (posicion < 0 || posicion >= this->cantidad_lineas)
-        return false;
-
-    for (int i = posicion; i < this->cantidad_lineas - 1; i++) {
-        this->lineas[i] = this->lineas[i + 1];
-    }
-
-    this->cantidad_lineas--;
-    this->lineas[this->cantidad_lineas] = "";
-
-    return true;
+    if (recursos_activos != nullptr)
+        recursos_activos->invocar(funcion, cantidad);
 }
